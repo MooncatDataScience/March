@@ -1,0 +1,291 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+Sys.setlocale(, "Chinese (Traditional)")
+```
+
+```{r}
+library('rio')
+library('utf8')
+library('dplyr')
+library('ggplot2')
+```
+
+```{r}
+df <- import('tourist.csv',  stringsAsFactors = F, encoding = 'UTF-8')
+glimpse(df)
+```
+
+```{r}
+rdf <- df
+names(rdf)[1] <- "Year"
+names(rdf)[2] <- "Class"
+names(rdf)[3] <- "Area"
+names(rdf)[4] <- "Subdivision"
+names(rdf)[5] <- "City"
+names(rdf)[6] <- "January"
+names(rdf)[7] <- "February"
+names(rdf)[8] <- "March"
+names(rdf)[9] <- "April"
+names(rdf)[10] <- "May"
+names(rdf)[11] <- "June"
+names(rdf)[12] <- "July"
+names(rdf)[13] <- "August"
+names(rdf)[14] <- "September"
+names(rdf)[15] <- "October"
+names(rdf)[16] <- "November"
+names(rdf)[17] <- "December"
+names(rdf)[18] <- "Total"
+```
+
+
+```{r}
+names(rdf)
+```
+
+```{r}
+tema = theme(plot.background = element_rect(fill="#FFFFFF"),
+             plot.title = element_text(size=25, hjust=.5),
+             axis.title.x = element_text(size=22, color = "black"),
+             axis.text.x = element_text(size=20),
+             axis.text.y = element_text(size=20))
+```
+
+
+
+
+```{r}
+# 2014 hot Area
+rdf %>%
+  select(Year, Subdivision, Total) %>%
+  filter(Year == 2014) %>%
+  arrange(desc(Total))
+```
+
+```{r}
+search_hot_view <- function(Years){
+  rdf %>%
+    select(Year, Subdivision, City, Total) %>%
+    filter(Year == Years) %>%
+    arrange(desc(Total))
+}
+  search_hot_view(2014)
+```
+
+```{r}
+rdf %>%
+  select(Year, Subdivision, City, Total) %>%
+  filter(Subdivision == "大坑登山步道")
+```
+
+```{r}
+search_view <- function(view_name){
+  rdf %>%
+    select(Year, Subdivision, City, Total) %>%
+    filter(Subdivision == view_name)
+}
+  search_view("大甲鎮瀾宮")
+```
+
+```{r}
+search_view <- function(view_name){
+  plt <- rdf %>%
+    select(Year, Subdivision, City, Total) %>%
+    filter(Subdivision == view_name)
+  
+  print(plt)
+
+  
+  ggplot(data = plt, aes(x = Year, y = Total))+
+  theme_bw() +
+  geom_line()
+}
+  search_view("大坑登山步道")
+  
+  
+```
+
+
+```{r}
+search_monch <- function(x, y){
+  plt <- rdf %>%
+    select(Year,x, Subdivision, City, Total) %>%
+    filter(Subdivision == y)
+  
+  print(plt)
+  
+  ggplot(data = plt, aes(x = Year, y = Total))+
+  theme_bw() +
+  geom_line()
+}
+search_monch("July", "大坑登山步道")
+```
+
+
+
+```{r}
+library(tidylog)
+search_monch <- function(...){
+  v <- c(...)
+  plt <- rdf %>%
+    select(Year,v, Subdivision) %>%
+    filter(Subdivision == "大坑登山步道")
+  
+  pt <- pivot_longer(plt, v, names_to = "Month", values_to = "Value")
+  print(pt)
+  
+  ggplot(data = pt, aes(x = Year, y = Value, color = Month))+
+  theme_bw() +
+  geom_line()
+}
+
+
+search_monch("January","February","March","April","May","June","July",  "August","September","October","November",  
+"December")
+
+```
+
+
+
+
+
+
+
+```{r}
+Subdivision_vector <- c("阿里山國家森林遊樂區", "大坑登山步道")
+plt <- rdf %>%
+    select(Year, Subdivision, Total) %>%
+    filter(Subdivision %in% Subdivision_vector)
+print(plt)
+ggplot(data = plt, aes(x = Year, y = Total, color = Subdivision)) +
+geom_line() +
+theme_bw()+
+tema
+  
+```
+
+
+```{r}
+compare_view <- function(...){
+  Subdivision_vector <- c(...)
+  plt<- rdf %>%
+      select(Year, Subdivision, Total) %>%
+      filter(Subdivision %in% Subdivision_vector)
+  
+  print(plt)
+  
+  ggplot(data = plt, aes(x = Year, y = Total, color = Subdivision)) +
+  geom_line() +
+  theme_bw()+
+  tema  
+}
+compare_view("大坑登山步道", "谷關遊憩區")
+  
+```
+
+
+
+```{r}
+rdf %>%
+  count(rdf$City == "臺中市" & Year == 2020)
+```
+
+```{r}
+
+view_year <- function(year, city){
+  plt <- rdf %>%
+    select(Year, Subdivision, Total, City) %>%
+    filter(Year == year, City == city)
+  
+  print(plt)
+  
+  
+  options(repr.plot.width=20, repr.plot.height=10)
+  ggplot(data = plt, aes(x = Total, y = Subdivision, fill = Subdivision)) +
+  geom_bar(stat="identity") +
+  theme_bw()
+
+  
+}
+
+view_year("2020", "臺中市")
+
+```
+
+
+
+```{r}
+library(cowplot)
+view_city <- function(city){
+  plt <- rdf %>%
+    select(Year, Subdivision, Total, City) %>%
+    filter(City == city)
+  
+  print(plt)
+  
+  options(repr.plot.width= 20, repr.plot.height=16)
+  
+  b <- ggplot(data = plt, aes(x = Year, y = Total, fill = Subdivision)) +
+    geom_bar(stat="identity", ) +
+    theme_bw()
+  
+  l <- ggplot(data = plt, aes(x = Year, y = Total, color = Subdivision)) +
+    geom_line() +
+    theme_bw()
+  
+  plot_grid(b, l, nrow=1, ncol=2)
+  
+  
+}
+
+# view_city("彰化縣")
+```
+
+
+```{r}
+#各縣市平均
+Avg_city <- function(year){
+  plt <- rdf %>%
+    select(Total, Year, City) %>%
+    filter(Year == 2014) %>%
+    group_by(City) %>%
+    summarize(mean_city = mean(Total)) %>%
+    arrange(desc(mean_city)) %>%
+    top_n(10)
+  
+  print(plt)
+  
+  ggplot(data = plt, aes(x = City, y = mean_city, fill = City)) +
+  geom_bar(stat="identity") +
+  theme_bw()
+}
+Avg_city(2020)
+
+
+```
+
+
+
+```{r}
+# rose plot
+plt <- rdf %>%
+    select(Year, City, Subdivision,Total) %>%
+    filter(Year == 2020)
+
+p1 <- ggplot(data = plt, aes(x = City, y=Total))+
+  geom_col(aes(fill = City),width = 1, size = 0)+
+  geom_col(aes(y=40),fill = "white", width = 1, alpha = 0.2, size = 0)+
+  geom_col(aes(y=20),fill = "white", width = 1, alpha = 0.2, size = 0)
+
+p2 <- p1 + coord_polar()+theme_void()+scale_y_continuous(breaks = seq(0, 150, 10))
+p2
+  
+```
+
+
+
